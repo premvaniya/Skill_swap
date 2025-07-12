@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-// import API from "../api/axios.js"; // Axios instance
 import axios from "axios";
-
+import { useDispatch } from "react-redux";
+import { loginUser } from "../Redux/userSlice"; // Adjust the import path as needed
 const UserLogin = () => {
+  const dispatch = useDispatch();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,17 +17,32 @@ const UserLogin = () => {
     setError("");
     setLoading(true);
 
+    if (!form.email || !form.password) {
+      setError("Please fill in all fields.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await axios.post("/api/auth/login", form);
-      const { token, user } = res.data;
+      // Destructure your API response here — adjust as needed!
+      const { token, user } = res.data; // assuming user = { id, email, image }
 
-      // Save token locally
+      // Save to localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
+      console.log("Login successful:", user);
 
-      // Redirect or show success
+      // Dispatch to Redux store
+      dispatch(loginUser({ 
+        token, 
+        id: user.id, 
+        email: user.email, 
+        image: user.image || null 
+      }));
+
       alert("Login successful!");
-      window.location.href = "/dashboard"; // or navigate with React Router
+      window.location.href = "/profile";
     } catch (err) {
       console.error("Login error:", err);
       setError(err.response?.data?.message || "Login failed");
